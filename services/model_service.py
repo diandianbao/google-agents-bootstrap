@@ -4,7 +4,6 @@
 
 from google.adk.models.lite_llm import LiteLlm
 
-
 class ModelService:
     """模型服务类，提供统一的模型创建和管理"""
 
@@ -15,7 +14,6 @@ class ModelService:
 
     # 可用的模型列表
     AVAILABLE_MODELS = [
-        "qwen3:30b-a3b-instruct-2507-fp16",
         "qwen3-coder:30b-a3b-fp16",
         "deepseek-v3.1:671b-cloud",
         "qwen3-coder:480b-cloud",

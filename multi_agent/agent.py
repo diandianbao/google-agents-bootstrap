@@ -222,16 +222,15 @@ def create_greeter_agent(model_name: str):
 
 root_agent = create_greeter_agent(SELECTED_MODEL)
 
-runner = InMemoryRunner(agent=root_agent)
-
 async def run_debug(question: str):
     """运行调试会话"""
     print("\n🚀 开始调试会话...")
+    runner = InMemoryRunner(agent=root_agent)
     result = await runner.run_debug(question)
     print(result)
 
 if __name__ == "__main__":
-    asyncio.run(run_debug("我想系统学习线段树，请帮我制定一个计划"))
+    asyncio.run(run_debug("Run the daily executive briefing on Tech, Health, and Finance"))
 
 
 
