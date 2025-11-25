@@ -17,7 +17,7 @@ SESSION = "default"  # Session
 MODEL_NAME = SELECTED_MODEL
 
 # Step 1: Create the same agent (notice we use LlmAgent this time)
-chatbot_agent = LlmAgent(
+root_agent = LlmAgent(
     model=model,
     name="text_chat_bot",
     description="A text chatbot with persistent memory",
@@ -29,7 +29,7 @@ db_url = "sqlite+aiosqlite:///my_agent_data.db"  # Use async SQLite driver
 session_service = DatabaseSessionService(db_url=db_url)
 
 # Step 3: Create a new runner with persistent storage
-runner = Runner(agent=chatbot_agent, app_name=APP_NAME, session_service=session_service)
+runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=session_service)
 
 print("✅ Upgraded to persistent sessions!")
 print(f"   - Database: my_agent_data.db")
