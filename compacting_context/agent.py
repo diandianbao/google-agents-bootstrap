@@ -1,8 +1,8 @@
 import asyncio
-import sqlite3
 
 from google.adk import Runner
 from google.adk.agents import LlmAgent
+from google.adk.apps.app import EventsCompactionConfig, App
 from google.adk.sessions.database_session_service import DatabaseSessionService
 from google.genai import types
 
@@ -18,26 +18,33 @@ SESSION = "default"  # Session
 MODEL_NAME = SELECTED_MODEL
 
 # Step 1: Create the same agent (notice we use LlmAgent this time)
-root_agent = LlmAgent(
+chatbot_agent = LlmAgent(
     model=model,
     name="text_chat_bot",
     description="A text chatbot with persistent memory",
 )
 
-# Step 2: Switch to DatabaseSessionService
-# SQLite database will be created automatically
-db_url = "sqlite+aiosqlite:///my_agent_data.db"  # Use async SQLite driver
-session_service = DatabaseSessionService(db_url=db_url)
-
-# Step 3: Create a new runner with persistent storage
-runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=session_service)
-
 print("✅ Upgraded to persistent sessions!")
 print(f"   - Database: my_agent_data.db")
 print(f"   - Sessions will survive restarts!")
 
+research_app_compacting = App(
+    name="research_app_compacting",
+    root_agent=chatbot_agent,
+    # This is the new part!
+    events_compaction_config=EventsCompactionConfig(
+        compaction_interval=3,  # Trigger compaction every 3 invocations
+        overlap_size=1,  # Keep 1 previous turn for context
+    ),
+)
 
-# Define helper functions that will be reused throughout the notebook
+db_url = "sqlite+aiosqlite:///my_agent_data.db"  # Local SQLite file
+session_service = DatabaseSessionService(db_url=db_url)
+
+research_runner_compacting = Runner(
+    app=research_app_compacting, session_service=session_service
+)
+
 async def run_session(
     runner_instance: Runner,
     user_queries: list[str] | str = None,
@@ -86,28 +93,61 @@ async def run_session(
     else:
         print("No queries!")
 
+print("✅ Helper functions defined.")
 
 async def main():
     await run_session(
-        runner,
-        [
-            "Hi, I am Sam! What is the capital of United States?",
-            "Hello! What is my name?",  # This time, the agent should remember!
-        ],
-        "stateful-agentic-session",
+        research_runner_compacting,
+        "What is the latest news about AI in healthcare?",
+        "compaction_demo",
     )
 
-def check_data_in_db():
-    with sqlite3.connect("my_agent_data.db") as connection:
-        cursor = connection.cursor()
-        result = cursor.execute(
-            "select app_name, session_id, author, content from events"
+    # Turn 2
+    await run_session(
+        research_runner_compacting,
+        "Are there any new developments in drug discovery?",
+        "compaction_demo",
+    )
+
+    # Turn 3 - Compaction should trigger after this turn!
+    await run_session(
+        research_runner_compacting,
+        "Tell me more about the second development you found.",
+        "compaction_demo",
+    )
+
+    # Turn 4
+    await run_session(
+        research_runner_compacting,
+        "Who are the main companies involved in that?",
+        "compaction_demo",
+    )
+
+    print("---------------------------------------------------")
+
+    # Get the final session state
+    final_session = await session_service.get_session(
+        app_name=research_runner_compacting.app_name,
+        user_id=USER_ID,
+        session_id="compaction_demo",
+    )
+
+    print("--- Searching for Compaction Summary Event ---")
+    found_summary = False
+    for event in final_session.events:
+        # Compaction events have a 'compaction' attribute
+        if event.actions and event.actions.compaction:
+            print("\n✅ SUCCESS! Found the Compaction Event:")
+            print(f"  Author: {event.author}")
+            print(f"\n Compacted information: {event}")
+            found_summary = True
+            break
+
+    if not found_summary:
+        print(
+            "\n❌ No compaction event found. Try increasing the number of turns in the demo."
         )
-        print([_[0] for _ in result.description])
-        for each in result.fetchall():
-            print(each)
 
 if __name__ == "__main__":
     asyncio.run(main())
-    print("----------------------------")
-    check_data_in_db()
+
