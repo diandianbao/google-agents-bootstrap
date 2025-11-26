@@ -16,7 +16,8 @@ model = model_service.create_model(SELECTED_MODEL)
 initial_writer_agent = LlmAgent(
     name="InitialWriterAgent",
     model=model,
-    instruction="""Based on the user's prompt, write the first draft of a short story (around 100-150 words).
+    instruction="""Based on the user's prompt, 
+                    write the first draft of a short story (around 100-150 words).
                     Output only the story text, with no introduction or explanation.""",
     output_key="current_story",  # Stores the first draft in the state.
 )
@@ -41,7 +42,8 @@ print("✅ critic_agent created.")
 
 # This is the function that the RefinerAgent will call to exit the loop.
 def exit_loop():
-    """Call this function ONLY when the critique is 'APPROVED', indicating the story is finished and no more changes are needed."""
+    """Call this function ONLY when the critique is 'APPROVED',
+    indicating the story is finished and no more changes are needed."""
     return {"status": "approved", "message": "Story approved. Exiting refinement loop."}
 
 

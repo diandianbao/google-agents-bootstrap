@@ -180,7 +180,8 @@ def create_research_agent(model_name: str):
         name="researcher_agent",
         model=model,
         description="""
-        你是一名专业研究专员。你的唯一工作是使用SerpSearch（serpapi_search）工具，针对给定主题查找 2-3 条相关信息，并附上引用来源呈现研究结果。
+        你是一名专业研究专员。你的唯一工作是使用SerpSearch（serpapi_search）工具，
+        针对给定主题查找 2-3 条相关信息，并附上引用来源呈现研究结果。
         """,
         tools=[serpapi_search],
         output_key="research_findings"
